@@ -1,0 +1,128 @@
+service: twilio-webhook-muxer
+
+provider:
+  name: aws
+  runtime: python3.7
+
+  # The default stage is the "local" stage; CI can deploy other stages (dev and prod)
+  stage: local
+
+  # We use us-west-2 as our AWS region
+  region: us-west-2
+
+  # 30-second timeout by default
+  timeout: 30
+
+  # Tags that will be added to each of the deployment resources
+  tags:
+      env: ${self:custom.stage}
+
+  # Environment variables
+  environment:
+    # Sentry integration: sends Lambda errors to Sentry. Remove this if you don't want to
+    # use Sentry
+    SENTRY_DSN: ${ssm:twilio-webhook-muxer.common.sentry_dsn~true}
+    SENTRY_ENVIRONMENT: ${self:custom.stage}
+
+    # Your Twilio credentials, used to verify the Twilio signature and re-sign
+    # the payload
+    TWILIO_SID: ${ssm:twilio-webhook-muxer.common.twilio_sid~true}
+    TWILIO_AUTH_TOKEN: ${ssm:twilio-webhook-muxer.common.twilio_auth_token~true}
+
+    # This is the URL this webhook handler is deployed at. We need this to
+    # verify the Twilio webhook signature. If you're using a custom domain,
+    # you shouldn't need to change this, but if you've deleted the
+    # custom domain configuration below you'll need to set this to your
+    # API Gateway-provided domain name.
+    TWILIO_CALLBACK_URL: https://${self:custom.customDomain.domainName}/muxer
+
+    # The list of downstream targets to forward the webhooks to. Configure this
+    # in the `custom` section below.
+    DOWNSTREAM_URLS: ${self:custom.downstreamURLs.${self:custom.stage}}
+
+  # Memory allocated to each lambda function
+  memorySize: 256
+
+package:
+  exclude:
+    - 'node_modules/**'
+    - '.vscode/**'
+    - '.mypy_cache/**'
+    - 'package.json'
+    - 'yarn.lock'
+
+
+
+plugins:
+  # This plugin installs our python dependencies, using docker to properly compile
+  # them for Lambda
+  - serverless-python-requirements
+
+  # Clean up old versions so we don't exceed our code storage quota
+  - serverless-prune-plugin
+
+  # Datadog integration: remove this if you don't use datadog
+  - serverless-plugin-datadog
+
+  # Custom domains: remove this to use an API Gateway-provided domain instead
+  - serverless-domain-manager
+
+custom:
+  # The downstream URLs to sent to. Different per-environment. Comma-separated.
+  downstreamURLs:
+    local: https://example.com/foo,https://example.com/bar
+    staging: https://example.com/foo,https://example.com/bar
+    prod: https://example.com/foo,https://example.com/bar
+
+  # The custom domain name to use for the muxer. You can remove this and
+  # the serverless-domain-manager plugin to use an API Gateway-provided domain
+  # instead.
+  customDomain:
+    domainName: twilio-muxer-${self:custom.stage}.voteamerica.io
+
+  # Specify how to build our python dependencies, and which ones are
+  # already available in Lambda and don't need to be bundled with the
+  # application
+  pythonRequirements:
+    dockerizePip: true
+    noDeploy: [
+      'boto3',
+      'botocore',
+      'docutils',
+      'jmespath',
+      'python-dateutil',
+      's3transfer',
+      'six',
+      'pip',
+      'setuptools'
+    ]
+
+  # Make stage/region accessible to other parts of the config
+  stage: ${opt:stage, self:provider.stage}
+  region: ${opt:region, self:provider.region}
+
+  # Configure DataDog integration. If you've removed serverless-plugin-datadog
+  # above, you can remove this. flushMetricsToLogs requires that you have
+  # the datadog forwarder installed; see
+  # https://github.com/DataDog/datadog-serverless-functions/tree/master/aws/logs_monitoring#installation
+  # for details.
+  datadog:
+    flushMetricsToLogs: true
+
+  # Automatically remove old function versions to avoid filling up your lambda code storage
+  # quota.
+  prune:
+    automatic: true
+    number: 3
+
+
+functions:
+  muxer:
+    handler: app.muxer.handler
+    events:
+    - http:
+        method: POST
+        path: /muxer
+
+
+
