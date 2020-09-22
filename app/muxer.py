@@ -1,12 +1,13 @@
 import json
+import os
+from threading import Thread
 from typing import Any, Dict, List
+from urllib.parse import parse_qsl
+
+import requests
 import sentry_sdk
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
-from urllib.parse import parse_qsl
-import os
 from twilio.request_validator import RequestValidator
-from threading import Thread
-import requests
 
 sentry_sdk.init(
     dsn=os.environ["SENTRY_DSN"],
