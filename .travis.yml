@@ -15,10 +15,7 @@ deploy:
   - provider: script
     skip_cleanup: true
     script: >-
-      yarn sls deploy -s staging &&
-      cd frontend &&
-      yarn install &&
-      ./deploy.sh
+      yarn sls deploy -s staging
     on:
       branch: master
   # deploy v* tags to prod
