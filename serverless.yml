@@ -71,7 +71,7 @@ custom:
   # The downstream URLs to sent to. Different per-environment. Comma-separated.
   downstreamURLs:
     local: https://example.com/foo,https://example.com/bar
-    staging: https://example.com/foo,https://example.com/bar
+    staging: https://api-staging.voteamerica.com/v1/smsbot/twilio/,https://actionnetwork.org/groups/inbound_messages?group_id=160798
     prod: https://example.com/foo,https://example.com/bar
 
   # The custom domain name to use for the muxer. You can remove this and
