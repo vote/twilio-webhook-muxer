@@ -9,7 +9,7 @@ install:
   - yarn install
   - pipenv install --dev
 script:
-  - pipenv run mypy
+  - pipenv run test
 deploy:
   # deploy master to dev
   - provider: script

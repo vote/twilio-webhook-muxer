@@ -19,6 +19,20 @@ When a Twilio webhook comes in, we verify the signature, and then rewrite that
 signature for each downstream location so that it matches the downstream
 location's URL.
 
+## Responses
+
+After passing on the Twilio webhook to each of the downstream locations,
+the muxer examines the reponses (in the order the downstream locations are
+listed in the configuration). The FIRST downstream location that passes back
+a non-empty TwiML response will be used as the response to send back to Twilio.
+If none of the downstream locations returns a non-empty TwiML response, the
+muxer will return a default empty TwiML response to Twilio.
+
+A non-empty TwiML response is one that:
+- Has a 2xx response code
+- Has a Content-Type of application/xml, text/xml, or text/html
+- Ignoring whitespace, is not empty or `<Response></Response>`
+
 ## Deploy Twilio Webhook Muxer
 
 1. Fork this repo

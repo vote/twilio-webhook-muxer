@@ -1,11 +1,12 @@
-import json
 import os
-from threading import Thread
+import concurrent.futures
 from typing import Any, Dict, List
 from urllib.parse import parse_qsl
+import logging
 
 import requests
 import sentry_sdk
+import re
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 from twilio.request_validator import RequestValidator
 
@@ -18,11 +19,28 @@ sentry_sdk.init(
 PRESERVE_HEADERS = {"content-type", "i-twilio-idempotency-token", "user-agent"}
 
 
+def is_nonempty_twiml_response(response: Any) -> bool:
+    if response.status_code < 200 or response.status_code >= 300:
+        return False
+
+    if response.headers.get("content-type") not in (
+        "application/xml",
+        "text/xml",
+        "text/html",
+    ):
+        return False
+
+    if re.sub(r"\s", "", response.text.lower()) in ("", "<response></response>"):
+        return False
+
+    return True
+
+
 class TwilioMuxer:
     def __init__(
         self, twilio_auth_token: str, muxer_url: str, downstream_urls: List[str]
     ):
-        self.validator = RequestValidator(os.environ["TWILIO_AUTH_TOKEN"])
+        self.validator = RequestValidator(twilio_auth_token)
         self.muxer_url = muxer_url
         self.downstream_urls = downstream_urls
 
@@ -37,7 +55,7 @@ class TwilioMuxer:
             url, parsed_body
         )
 
-        requests.post(url, data=parsed_body, headers=downstream_headers)
+        return requests.post(url, data=parsed_body, headers=downstream_headers)
 
     def mux_request(self, request_body: str, request_headers: Dict[str, str]):
         parsed_body = dict(parse_qsl(request_body, keep_blank_values=True))
@@ -53,19 +71,36 @@ class TwilioMuxer:
         if not request_valid:
             raise RuntimeError(f"Invalid Twilio signature")
 
-        threads = [
-            Thread(
-                target=self.make_downstream_request,
-                args=(url, parsed_body, request_headers),
-            )
-            for url in self.downstream_urls
-        ]
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(
+                    self.make_downstream_request, url, parsed_body, request_headers
+                )
+                for url in self.downstream_urls
+            ]
 
-        for thread in threads:
-            thread.start()
+            response = None
+            for url, future in zip(self.downstream_urls, futures):
+                try:
+                    result = future.result()
+                except Exception as e:
+                    logging.exception(f"Request failed to downstream {url}")
+                    sentry_sdk.capture_exception(e)
+                    continue
 
-        for thread in threads:
-            thread.join()
+                try:
+                    result.raise_for_status()
+                except Exception as e:
+                    logging.exception(
+                        f"Request to downstream {url} return status code {result.status_code}"
+                    )
+                    sentry_sdk.capture_exception(e)
+                    continue
+
+                if (not response) and is_nonempty_twiml_response(result):
+                    response = result.text
+
+        return response or "<Response></Response>"
 
 
 muxer = TwilioMuxer(
@@ -79,10 +114,10 @@ def handler(event: Any, context: Any):
     request_body = event["body"]
     request_headers = event["headers"]
 
-    muxer.mux_request(request_body, request_headers)
+    twiml_response = muxer.mux_request(request_body, request_headers)
 
     return {
         "statusCode": 200,
-        "headers": {"Content-Type": "application/json"},
-        "body": json.dumps({"ok": True}),
+        "headers": {"Content-Type": "application/xml"},
+        "body": twiml_response,
     }
