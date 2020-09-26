@@ -9,6 +9,7 @@ mypy = "*"
 autoflake = "*"
 isort = "*"
 pytest = "*"
+importlib_metadata = "*"
 responses = "*"
 
 [packages]

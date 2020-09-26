@@ -1,4 +1,4 @@
-import responses
+import responses  # type: ignore
 from .muxer import TwilioMuxer, is_nonempty_twiml_response
 from twilio.request_validator import RequestValidator
 import pytest
