@@ -72,7 +72,7 @@ custom:
   downstreamURLs:
     local: https://example.com/foo,https://example.com/bar
     staging: https://api-staging.voteamerica.com/v1/smsbot/twilio/,https://actionnetwork.org/groups/inbound_messages?group_id=160798
-    prod: https://example.com/foo,https://example.com/bar
+    prod: https://api.voteamerica.com/v1/smsbot/twilio/,https://actionnetwork.org/groups/inbound_messages?group_id=158487
 
   # The custom domain name to use for the muxer. You can remove this and
   # the serverless-domain-manager plugin to use an API Gateway-provided domain
