@@ -38,7 +38,11 @@ provider:
 
     # The list of downstream targets to forward the webhooks to. Configure this
     # in the `custom` section below.
-    DOWNSTREAM_URLS: ${self:custom.downstreamURLs.${self:custom.stage}}
+    #
+    # If you are deploying without Serverless and setting this env var manually,
+    # this must be a base64-encoded JSON blob (we base64-encode because on
+    # Lambda, env vars can't contain commas)
+    DOWNSTREAM_CONFIG: ${self:custom.downstreamConfig.${self:custom.stage}}
 
   # Memory allocated to each lambda function
   memorySize: 256
@@ -67,12 +71,68 @@ plugins:
   # Custom domains: remove this to use an API Gateway-provided domain instead
   - serverless-domain-manager
 
+  # This takes the DOWNSTREAM_CONFIG env var above, serializes it as JSON,
+  # and then base64-encodes it. This is required because Lambda environment
+  # variables must be strings and cannot contain ",".
+  - serverless-plugin-encode-env-var-objects
+
 custom:
-  # The downstream URLs to sent to. Different per-environment. Comma-separated.
-  downstreamURLs:
-    local: https://example.com/foo,https://example.com/bar
-    staging: https://api-staging.voteamerica.com/v1/smsbot/twilio/,https://actionnetwork.org/groups/inbound_messages?group_id=160798
-    prod: https://api.voteamerica.com/v1/smsbot/twilio/,https://actionnetwork.org/groups/inbound_messages?group_id=158487
+  # The downstream URLs to sent to. Different per-environment. See the README
+  # for the schema.
+  downstreamConfig:
+    local:
+      default:
+        downstreams: ["https://fuzzy-va.ngrok.io/other", "https://fuzzy-va.ngrok.io/post"]
+        responder: 1
+      keywords:
+        STOP:
+          downstreams: ["https://fuzzy-va.ngrok.io/stop"]
+          responder: null
+        HELP:
+          downstreams: ["https://fuzzy-va.ngrok.io/help"]
+          responder: 0
+    staging:
+      default:
+        downstreams:
+          - https://helpline-staging.voteamerica.io/twilio-pull
+          - https://api-staging.voteamerica.com/v1/smsbot/twilio/
+          - https://actionnetwork.org/groups/inbound_messages?group_id=160798
+        responder: 0
+      keywords:
+        STOP:
+          downstreams:
+            - https://helpline-staging.voteamerica.io/twilio-pull
+            - https://api-staging.voteamerica.com/v1/smsbot/twilio/
+            - https://actionnetwork.org/groups/inbound_messages?group_id=160798
+          responder: null
+        HELP:
+          downstreams:
+            - https://api-staging.voteamerica.com/v1/smsbot/twilio/
+          responder: 0
+        JOIN:
+          downstreams:
+            - https://api-staging.voteamerica.com/v1/smsbot/twilio/
+          responder: 0
+    prod:
+      default:
+        downstreams:
+          - https://api.voteamerica.com/v1/smsbot/twilio/
+          - https://actionnetwork.org/groups/inbound_messages?group_id=158487
+        responder: 0
+      keywords:
+        STOP:
+          downstreams:
+            - https://api.voteamerica.com/v1/smsbot/twilio/
+            - https://actionnetwork.org/groups/inbound_messages?group_id=158487
+          responder: null
+        HELP:
+          downstreams:
+            - https://api.voteamerica.com/v1/smsbot/twilio/
+          responder: 0
+        JOIN:
+          downstreams:
+            - https://api.voteamerica.com/v1/smsbot/twilio/
+          responder: 0
 
   # The custom domain name to use for the muxer. You can remove this and
   # the serverless-domain-manager plugin to use an API Gateway-provided domain
@@ -122,6 +182,7 @@ functions:
     events:
     - http:
         method: POST
+        integration: lambda-proxy
         path: /muxer
 
 

@@ -1,9 +1,9 @@
 # Twilio Webhook Muxer
 
-Webhook Muxer is a Lambda function that receives Twilio webhooks and
+Webhook Muxer is a Lambda function that receives Twilio incoming SMS webhooks and
 re-transmits them to downstream locations. It's useful because Twilio only
-supports adding a single webhook URL to a phone number for incoming calls and
-texts, but you might want to deliver those webhooks to multiple locations.
+supports adding a single webhook URL to a phone number for incoming texts,
+but you might want to deliver those webhooks to multiple locations.
 
 ## Twilio Signatures
 
@@ -19,19 +19,46 @@ When a Twilio webhook comes in, we verify the signature, and then rewrite that
 signature for each downstream location so that it matches the downstream
 location's URL.
 
-## Responses
+## Configuration
 
-After passing on the Twilio webhook to each of the downstream locations,
-the muxer examines the reponses (in the order the downstream locations are
-listed in the configuration). The FIRST downstream location that passes back
-a non-empty TwiML response will be used as the response to send back to Twilio.
-If none of the downstream locations returns a non-empty TwiML response, the
-muxer will return a default empty TwiML response to Twilio.
+The muxer is configured with a JSON configuration (see `serverless.yml` to
+edit the configuration).
 
-A non-empty TwiML response is one that:
-- Has a 2xx response code
-- Has a Content-Type of application/xml, text/xml, or text/html
-- Ignoring whitespace, is not empty or `<Response></Response>`
+Here's what this config looks like:
+
+```yaml
+{
+   "keywords": {
+      # This is a map from keyword -> configuration. The body of the incoming
+      # text is compared to each of the configured keywords (ignore case and
+      # leading/trailing spaces) to figure out where to send the payload
+      # and what downstream to use the response from
+      "STOP": {
+         # This is the set of URLs to send the payload on to. The incoming
+         # payload will be send to each of these URLs in parallel.
+         "downstreams": ["https://some-downstream.com", "http://other-downstream.com"],
+
+         # This is which downstream (by 0-based index) to use the response from.
+         # In this example, we'll pass the response from http://other-downstream.com
+         # back to Twilio.
+         #
+         # If we are not able to make a successful request to this downstream,
+         # we'll return a 500 to Twilio.
+         #
+         # The results of the requests to other downstreams (including successful
+         # responses, HTTP non-2xx status codes, and network errors) are ignored.
+         "responder": 1
+      }
+   },
+
+   # You must also provide a default configuration to use if none of the
+   # keywords match
+   "default": {
+      "downstreams": ["https://some-downstream.com", "http://other-downstream.com"],
+      "responder": 0
+   }
+}
+```
 
 ## Deploy Twilio Webhook Muxer
 
