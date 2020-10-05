@@ -182,6 +182,7 @@ functions:
     events:
     - http:
         method: POST
+        integration: lambda-proxy
         path: /muxer
 
 

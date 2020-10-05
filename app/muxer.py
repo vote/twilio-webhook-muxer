@@ -98,10 +98,14 @@ class TwilioMuxer:
             # to return the result
             return result
 
+        print(f"Making requests to downstreams: {request_config.downstreams}")
         with concurrent.futures.ThreadPoolExecutor() as executor:
             results = list(
                 executor.map(make_downstream_request, request_config.downstreams)
             )
+
+        print(f"Downstream responses: {results}")
+        print(f"Taking result from responder: {request_config.responder}")
 
         if request_config.responder is None:
             return 200, "<Response></Response>", {"Content-Type": "application/xml"}
@@ -110,7 +114,11 @@ class TwilioMuxer:
         if result is None:
             return 500, "<Response></Response>", {"Content-Type": "application/xml"}
 
-        return result.status_code, result.text, dict(result.headers)
+        return (
+            result.status_code,
+            result.text,
+            {"Content-Type": result.headers.get("Content-Type", "application/xml")},
+        )
 
 
 if "pytest" not in sys.modules:
