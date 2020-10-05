@@ -2986,6 +2986,11 @@ lodash.values@^4.3.0:
   resolved "https://registry.yarnpkg.com/lodash.values/-/lodash.values-4.3.0.tgz#a3a6c2b0ebecc5c2cba1c17e6e620fe81b53d347"
   integrity sha1-o6bCsOvsxcLLocF+bmIP6BtT00c=
 
+lodash@4.17.4:
+  version "4.17.4"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
+  integrity sha1-eCA6TRwyiuHYbcpkYONptX9AVa4=
+
 lodash@4.17.x, lodash@^4.17.11, lodash@^4.17.12, lodash@^4.17.14, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20:
   version "4.17.20"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.20.tgz#b44a9b6297bcb698f1c51a3545a2b3b368d59c52"
@@ -3974,6 +3979,13 @@ serverless-plugin-datadog@^0.24.0:
   version "0.24.0"
   resolved "https://registry.yarnpkg.com/serverless-plugin-datadog/-/serverless-plugin-datadog-0.24.0.tgz#80fe54582f788cacbba7b369ac9fd4eed5c87c81"
   integrity sha512-Sq3rfFmxgCAfVGQnGpLzvPSmG6yHG6wA1h6POzS7J0dcJaZBbpqwFBkZs+DwOaBcWht4FErYxaKbM3Mi66/0gg==
+
+serverless-plugin-encode-env-var-objects@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/serverless-plugin-encode-env-var-objects/-/serverless-plugin-encode-env-var-objects-1.1.0.tgz#173210d1544cc8ad2fdf9e0bd76dae2635c230af"
+  integrity sha1-FzIQ0VRMyK0v354L122uJjXCMK8=
+  dependencies:
+    lodash "4.17.4"
 
 serverless-prune-plugin@^1.4.2:
   version "1.4.3"

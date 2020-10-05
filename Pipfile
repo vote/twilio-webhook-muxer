@@ -16,6 +16,7 @@ responses = "*"
 sentry-sdk = "*"
 requests = "*"
 twilio = "*"
+pydantic = "*"
 
 [requires]
 python_version = "3.7"
@@ -28,6 +29,6 @@ autoflake = "autoflake --remove-unused-variables --remove-all-unused-imports --i
 isort = "isort --recursive app"
 black = "black app"
 mypy = "mypy app"
-pytest = "bash -c \"SENTRY_DSN='' SENTRY_ENVIRONMENT='' TWILIO_AUTH_TOKEN='' TWILIO_CALLBACK_URL='' DOWNSTREAM_URLS='' pytest app\""
+pytest = "pytest app"
 test = "bash -c 'pipenv run mypy && pipenv run pytest'"
 format = "bash -c 'pipenv run autoflake && pipenv run isort && pipenv run black'"

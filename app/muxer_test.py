@@ -3,6 +3,8 @@ from .muxer import TwilioMuxer, is_nonempty_twiml_response
 from twilio.request_validator import RequestValidator
 import pytest
 from unittest.mock import Mock
+from .config import Config, KeywordConfig
+import urllib.parse
 
 MOCK_AUTH_TOKEN = "abcd"
 MOCK_MUXER_URL = "https://examplemuxer.com"
@@ -17,18 +19,19 @@ def sign_request(url, parsed_body):
     return RequestValidator(MOCK_AUTH_TOKEN).compute_signature(url, parsed_body)
 
 
-def mux_request(*downstream_urls):
+def mux_request(config, body="foobar"):
     muxer = TwilioMuxer(
-        twilio_auth_token=MOCK_AUTH_TOKEN,
-        muxer_url=MOCK_MUXER_URL,
-        downstream_urls=downstream_urls,
+        twilio_auth_token=MOCK_AUTH_TOKEN, muxer_url=MOCK_MUXER_URL, config=config,
     )
 
+    request_with_body = f"Body={urllib.parse.quote_plus(body)}&{MOCK_WEBHOOK_PAYLOAD}"
+    parsed_request_with_body = {"Body": body, **PARSED_MOCK_WEBHOOK_PAYLOAD}
+
     return muxer.mux_request(
-        MOCK_WEBHOOK_PAYLOAD,
+        request_with_body,
         {
             "X-Twilio-Signature": sign_request(
-                MOCK_MUXER_URL, PARSED_MOCK_WEBHOOK_PAYLOAD
+                MOCK_MUXER_URL, parsed_request_with_body
             ),
             "Content-Type": MOCK_WEBHOOK_CONTENT_TYPE,
             "I-Twilio-Idempotency-Token": MOCK_WEBHOOK_IDEMPOTENCY_TOKEN,
@@ -39,19 +42,25 @@ def mux_request(*downstream_urls):
 
 
 def mock_response(
-    upstream_url,
-    body="<Response></Response>",
+    downstream_url,
+    request_body="foobar",
+    body="<Response>some response</Response>",
     content_type="application/xml",
     status=200,
     raise_exception=False,
 ):
+    request_with_body = (
+        f"Body={urllib.parse.quote_plus(request_body)}&{MOCK_WEBHOOK_PAYLOAD}"
+    )
+    parsed_request_with_body = {"Body": request_body, **PARSED_MOCK_WEBHOOK_PAYLOAD}
+
     def request_callback(request):
         # check body
-        assert request.body == MOCK_WEBHOOK_PAYLOAD
+        assert request.body == request_with_body
 
         # check signature
         assert request.headers["X-Twilio-Signature"] == sign_request(
-            upstream_url, PARSED_MOCK_WEBHOOK_PAYLOAD
+            downstream_url, parsed_request_with_body
         )
 
         # check header passthrough
@@ -68,88 +77,175 @@ def mock_response(
 
     if raise_exception:
         responses.add(
-            responses.POST, upstream_url, body=Exception("Some connection error")
+            responses.POST, downstream_url, body=Exception("Some connection error")
         )
     else:
         responses.add_callback(
-            responses.POST, upstream_url, callback=request_callback,
+            responses.POST, downstream_url, callback=request_callback,
         )
 
 
+# No responder
+
+# Responder returns success
+
+# Responder returns failure
+
+# Responder errors
+
+# Keyword matching - matched
+# Keyword matching - default
+
+
 @responses.activate
-def test_basic_requests():
-    mock_response("https://upstream1.com")
-    mock_response("https://upstream2.com")
+def test_no_responder():
+    mock_response("https://downstream1.com")
+    mock_response("https://downstream2.com")
 
-    assert (
-        mux_request("https://upstream1.com", "https://upstream2.com")
-        == "<Response></Response>"
-    )
-
-
-@responses.activate
-def test_request_errors():
-    # If some requests fail, the others should go through
-    mock_response("https://upstream1.com", raise_exception=True)
-    mock_response("https://upstream2.com", status=500)
-    mock_response("https://upstream3.com")
-
-    assert (
-        mux_request(
-            "https://upstream1.com", "https://upstream2.com", "https://upstream3.com"
+    assert mux_request(
+        Config(
+            default=KeywordConfig(
+                downstreams=["https://downstream1.com", "https://downstream2.com"],
+                responder=None,
+            ),
+            keywords={},
         )
-        == "<Response></Response>"
-    )
+    ) == (200, "<Response></Response>", {"Content-Type": "application/xml"})
 
 
 @responses.activate
-def test_response_priority():
-    mock_response("https://upstream1.com", raise_exception=True)
-    mock_response("https://upstream2.com", status=500, body="<Response>aaa</Response>")
-    mock_response("https://upstream3.com")
+def test_responder_success():
     mock_response(
-        "https://upstream4.com", body='{"x": "y"}', content_type="application/json"
+        "https://downstream1.com", body="body1", content_type="content1", status=201
     )
-    mock_response("https://upstream5.com", body="<Response>bbb</Response>")
-    mock_response("https://upstream6.com", body="<Response>ccc</Response>")
+    mock_response(
+        "https://downstream2.com", body="body2", content_type="content2", status=500
+    )
 
-    assert (
-        mux_request(
-            "https://upstream1.com",
-            "https://upstream2.com",
-            "https://upstream3.com",
-            "https://upstream4.com",
-            "https://upstream5.com",
-            "https://upstream6.com",
+    assert mux_request(
+        Config(
+            default=KeywordConfig(
+                downstreams=["https://downstream1.com", "https://downstream2.com"],
+                responder=0,
+            ),
+            keywords={},
         )
-        == "<Response>bbb</Response>"
+    ) == (201, "body1", {"Content-Type": "content1"})
+
+
+@responses.activate
+def test_responder_failure():
+    mock_response("https://downstream1.com", raise_exception=True)
+    mock_response(
+        "https://downstream2.com", body="body2", content_type="content2", status=500
     )
 
-
-@pytest.mark.parametrize(
-    "status_code,content_type,text,expected",
-    [
-        (200, "application/xml", "<Response>xxx</Response>", True),
-        (200, "text/xml", "<Response>xxx</Response>", True),
-        (200, "text/html", "<Response>xxx</Response>", True),
-        (201, "application/xml", "<Response>xxx</Response>", True),
-        (500, "application/xml", "<Response>xxx</Response>", False),
-        (200, "application/json", "<Response>xxx</Response>", False),
-        (200, "application/xml", "<Response></Response>", False),
-        (200, "application/xml", "<response> \n \t </RESPONSE>", False),
-        (200, "application/xml", "  ", False),
-        (200, "application/xml", "\n", False),
-        (200, "application/xml", "", False),
-    ],
-)
-def test_is_nonempty_twiml_response(status_code, content_type, text, expected):
-    assert (
-        is_nonempty_twiml_response(
-            Mock(
-                status_code=status_code,
-                headers={"content-type": content_type},
-                text=text,
-            )
+    assert mux_request(
+        Config(
+            default=KeywordConfig(
+                downstreams=["https://downstream1.com", "https://downstream2.com"],
+                responder=1,
+            ),
+            keywords={},
         )
-        == expected
-    )
+    ) == (500, "body2", {"Content-Type": "content2"})
+
+
+@responses.activate
+def test_responder_error():
+    mock_response("https://downstream1.com")
+    mock_response("https://downstream2.com", raise_exception=True)
+
+    assert mux_request(
+        Config(
+            default=KeywordConfig(
+                downstreams=["https://downstream1.com", "https://downstream2.com"],
+                responder=1,
+            ),
+            keywords={},
+        )
+    ) == (500, "<Response></Response>", {"Content-Type": "application/xml"})
+
+
+@responses.activate
+def test_matching_default():
+    mock_response("https://downstream1.com", body="d1")
+    mock_response("https://downstream2.com", body="d2")
+    mock_response("https://downstream3.com", body="d3")
+
+    assert mux_request(
+        Config(
+            default=KeywordConfig(
+                downstreams=["https://downstream1.com"], responder=0,
+            ),
+            keywords={
+                "stop": KeywordConfig(
+                    downstreams=["https://downstream2.com"], responder=0
+                ),
+                " HELP ": KeywordConfig(
+                    downstreams=["https://downstream3.com"], responder=0
+                ),
+            },
+        )
+    ) == (200, "d1", {"Content-Type": "application/xml"})
+
+    responses.assert_call_count("https://downstream1.com", 1)
+    responses.assert_call_count("https://downstream2.com", 0)
+    responses.assert_call_count("https://downstream3.com", 0)
+
+
+@responses.activate
+def test_matching_stop():
+    mock_response("https://downstream1.com", body="d1", request_body=" StOP\n")
+    mock_response("https://downstream2.com", body="d2", request_body=" StOP\n")
+    mock_response("https://downstream3.com", body="d3", request_body=" StOP\n")
+
+    assert mux_request(
+        Config(
+            default=KeywordConfig(
+                downstreams=["https://downstream1.com"], responder=0,
+            ),
+            keywords={
+                "stop": KeywordConfig(
+                    downstreams=["https://downstream2.com"], responder=0
+                ),
+                " HELP ": KeywordConfig(
+                    downstreams=["https://downstream3.com"], responder=0
+                ),
+            },
+        ),
+        body=" StOP\n",
+    ) == (200, "d2", {"Content-Type": "application/xml"})
+
+    responses.assert_call_count("https://downstream1.com", 0)
+    responses.assert_call_count("https://downstream2.com", 1)
+    responses.assert_call_count("https://downstream3.com", 0)
+
+
+@responses.activate
+def test_matching_help():
+    mock_response("https://downstream1.com", body="d1", request_body="help")
+    mock_response("https://downstream2.com", body="d2", request_body="help")
+    mock_response("https://downstream3.com", body="d3", request_body="help")
+
+    assert mux_request(
+        Config(
+            default=KeywordConfig(
+                downstreams=["https://downstream1.com"], responder=0,
+            ),
+            keywords={
+                "stop": KeywordConfig(
+                    downstreams=["https://downstream2.com"], responder=0
+                ),
+                " HELP ": KeywordConfig(
+                    downstreams=["https://downstream3.com"], responder=0
+                ),
+            },
+        ),
+        body="help",
+    ) == (200, "d3", {"Content-Type": "application/xml"})
+
+    responses.assert_call_count("https://downstream1.com", 0)
+    responses.assert_call_count("https://downstream2.com", 0)
+    responses.assert_call_count("https://downstream3.com", 1)
+
