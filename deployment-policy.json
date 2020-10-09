@@ -4,8 +4,6 @@
     {
       "Effect": "Allow",
       "Action": [
-        "cloudformation:List*",
-        "cloudformation:Get*",
         "cloudformation:ValidateTemplate"
       ],
       "Resource": [
@@ -19,24 +17,11 @@
         "cloudformation:CreateUploadBucket",
         "cloudformation:DeleteStack",
         "cloudformation:Describe*",
-        "cloudformation:UpdateStack"
+        "cloudformation:UpdateStack",
+        "cloudformation:ListStackResources"
       ],
       "Resource": [
         "arn:aws:cloudformation:us-west-2:*:stack/twilio-webhook-muxer-*/*"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "lambda:Get*",
-        "lambda:List*",
-        "lambda:CreateFunction",
-        "lambda:ListTags",
-        "lambda:TagResource",
-        "lambda:UntagResource"
-      ],
-      "Resource": [
-        "*"
       ]
     },
     {
@@ -59,7 +44,9 @@
         "lambda:PublishVersion",
         "lambda:RemovePermission",
         "lambda:PutProvisionedConcurrencyConfig",
-        "lambda:Update*"
+        "lambda:Update*",
+        "lambda:List*",
+        "lambda:Get*"
       ],
       "Resource": [
         "arn:aws:lambda:us-west-2:*:function:twilio-webhook-muxer-*-*"
@@ -68,7 +55,8 @@
     {
       "Effect": "Allow",
       "Action": [
-        "iam:PassRole"
+        "iam:PassRole",
+        "iam:GetRole"
       ],
       "Resource": [
         "arn:aws:iam::*:role/twilio-webhook-muxer-*"
@@ -76,94 +64,8 @@
     },
     {
       "Effect": "Allow",
-      "Action": "kinesis:*",
-      "Resource": [
-        "arn:aws:kinesis:*:*:stream/twilio-webhook-muxer-*-us-west-2"
-      ]
-    },
-    {
-      "Effect": "Allow",
       "Action": [
-        "iam:GetRole",
-        "iam:CreateRole",
-        "iam:PutRolePolicy",
-        "iam:DeleteRolePolicy",
-        "iam:DeleteRole",
-        "iam:AttachRolePolicy"
-      ],
-      "Resource": [
-        "arn:aws:iam::*:role/twilio-webhook-muxer-*-us-west-2-lambdaRole"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "cloudwatch:GetMetricStatistics"
-      ],
-      "Resource": [
-        "*"
-      ]
-    },
-    {
-      "Action": [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream"
-      ],
-      "Resource": [
-        "arn:aws:logs:us-west-2:*:*"
-      ],
-      "Effect": "Allow"
-    },
-    {
-      "Action": [
-        "logs:PutLogEvents"
-      ],
-      "Resource": [
-        "arn:aws:logs:us-west-2:*:*"
-      ],
-      "Effect": "Allow"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "logs:DescribeLogStreams",
-        "logs:DescribeLogGroups",
-        "logs:FilterLogEvents"
-      ],
-      "Resource": [
-        "*"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "events:Put*",
-        "events:Remove*",
-        "events:Delete*"
-      ],
-      "Resource": [
-        "arn:aws:events:*:*:rule/twilio-webhook-muxer-*-us-west-2"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "events:DescribeRule"
-      ],
-      "Resource": [
-        "arn:aws:events:us-west-2:*:rule/twilio-webhook-muxer-*-*"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ssm:DescribeParameters"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
+        "ssm:DescribeParameters",
         "ssm:GetParameter",
         "ssm:GetParameters"
       ],
@@ -191,50 +93,36 @@
         "apigateway:UpdateRestApiPolicy"
       ],
       "Resource": [
-        "arn:aws:apigateway:*::/restapis*",
-        "arn:aws:apigateway:*::/apikeys*",
-        "arn:aws:apigateway:*::/usageplans*",
-        "arn:aws:apigateway:*::/apis*",
-        "arn:aws:apigateway:*::/domainnames*",
-        "arn:aws:apigateway:*::/tags*"
+        "arn:aws:apigateway:us-west-2::/restapis/q83s4cgnx9/*",
+        "arn:aws:apigateway:us-west-2::/restapis/q83s4cgnx9",
+        "arn:aws:apigateway:us-west-2::/restapis/3rvcfqdbgk/*",
+        "arn:aws:apigateway:us-west-2::/restapis/3rvcfqdbgk",
+        "arn:aws:apigateway:us-west-2::/restapis/sh36p41rs9/*",
+        "arn:aws:apigateway:us-west-2::/restapis/sh36p41rs9"
       ]
     },
     {
       "Effect": "Allow",
       "Action": [
-        "route53:ListHostedZones",
-        "route53:GetHostedZone",
-        "route53:ListResourceRecordSets"
+        "apigateway:GET"
       ],
-      "Resource": "*"
+      "Resource": [
+        "arn:aws:apigateway:us-west-2::/restapis"
+      ]
     },
     {
       "Effect": "Allow",
       "Action": [
-        "route53:ChangeResourceRecordSets"
+        "apigateway:GET",
+        "apigateway:POST",
+        "apigateway:PUT",
+        "apigateway:DELETE",
+        "apigateway:PATCH"
       ],
-      "Resource": "arn:aws:route53:::hostedzone/Z1TTQATVKSS3HL"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "acm:ListCertificates"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "cloudfront:UpdateDistribution"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "iam:CreateServiceLinkedRole"
-      ],
-      "Resource": "arn:aws:iam::*:role/aws-service-role/ops.apigateway.amazonaws.com/AWSServiceRoleForAPIGateway"
+      "Resource": [
+        "arn:aws:apigateway:us-west-2::/domainnames/twilio-muxer-*.voteamerica.io/*",
+        "arn:aws:apigateway:us-west-2::/domainnames/twilio-muxer-*.voteamerica.io"
+      ]
     }
   ]
 }
