@@ -96,7 +96,6 @@ custom:
         downstreams:
           - https://helpline-staging.voteamerica.io/twilio-pull
           - https://api-staging.voteamerica.com/v1/smsbot/twilio/
-          - https://actionnetwork.org/groups/inbound_messages?group_id=160798
         responder: 0
       keywords:
         STOP:
@@ -116,12 +115,13 @@ custom:
     prod:
       default:
         downstreams:
+          - https://helpline-prod.voteamerica.io/twilio-pull
           - https://api.voteamerica.com/v1/smsbot/twilio/
-          - https://actionnetwork.org/groups/inbound_messages?group_id=158487
         responder: 0
       keywords:
         STOP:
           downstreams:
+            - https://helpline-prod.voteamerica.io/twilio-pull
             - https://api.voteamerica.com/v1/smsbot/twilio/
             - https://actionnetwork.org/groups/inbound_messages?group_id=158487
           responder: null
