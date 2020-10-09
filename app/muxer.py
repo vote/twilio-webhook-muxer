@@ -1,13 +1,14 @@
-import os
 import concurrent.futures
-from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import parse_qsl
 import logging
+import os
+import re
+import string
 import sys
+from typing import Any, Dict, Optional, Tuple
+from urllib.parse import parse_qsl
 
 import requests
 import sentry_sdk
-import re
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 from twilio.request_validator import RequestValidator
 
@@ -60,7 +61,20 @@ class TwilioMuxer:
         if not request_valid:
             raise RuntimeError(f"Invalid Twilio signature")
 
-        request_body_normalized = parsed_body.get("Body", "").strip().lower()
+        request_body_normalized = " ".join(
+            parsed_body.get("Body", "")
+            .strip()
+            .lower()
+            .translate(str.maketrans("", "", string.punctuation))
+            .split()
+        )
+
+        for keyword, ls in self.config.alternates.items():
+            if request_body_normalized in ls:
+                request_body_normalized = keyword
+                # clean up downstream request too
+                parsed_body["Body"] = keyword
+
         request_config = self.config.keywords.get(
             request_body_normalized, self.config.default
         )

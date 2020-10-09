@@ -1,8 +1,9 @@
-from typing import List, Dict, Any, Optional
 import base64
 import json
-from pydantic import BaseModel, validator
 import re
+from typing import Dict, List, Optional
+
+from pydantic import BaseModel, validator
 
 # From https://github.com/django/django/blob/stable/1.3.x/django/core/validators.py#L45
 # but no ftp:// support
@@ -44,6 +45,7 @@ class KeywordConfig(BaseModel):
 class Config(BaseModel):
     default: KeywordConfig
     keywords: Dict[str, KeywordConfig]
+    alternates: Dict[str, List[str]] = {}
 
     @validator("keywords")
     def normalize_keywords(cls, keywords):
@@ -55,4 +57,3 @@ def parse_config(config_env: str) -> Config:
     # not support having commas in environment variables
     config = json.loads(base64.b64decode(config_env))
     return Config(**config)
-

@@ -1,8 +1,10 @@
-import pytest
 import base64
 import json
-from .config import KeywordConfig, Config, parse_config
+
+import pytest
 from pydantic import ValidationError
+
+from .config import Config, KeywordConfig, parse_config
 
 
 def test_valid_config():
@@ -18,7 +20,10 @@ def test_valid_config():
                         "responder": 1,
                     },
                     "keywords": {
-                        " STOp\n": {"downstreams": ["http://c.com"], "responder": 0,},
+                        " STOp\n": {
+                            "downstreams": ["http://c.com"],
+                            "responder": 0,
+                        },
                         "start": {"downstreams": ["http://c.com"], "responder": None},
                     },
                 }
@@ -43,7 +48,10 @@ def test_missing_field():
                 json.dumps(
                     {
                         "keywords": {
-                            "STOP": {"downstreams": ["http://c.com"], "responder": 0,}
+                            "STOP": {
+                                "downstreams": ["http://c.com"],
+                                "responder": 0,
+                            }
                         },
                     }
                 ).encode()
@@ -58,9 +66,15 @@ def test_nested_error():
             base64.b64encode(
                 json.dumps(
                     {
-                        "default": {"downstreams": "http://a.com", "responder": 0,},
+                        "default": {
+                            "downstreams": "http://a.com",
+                            "responder": 0,
+                        },
                         "keywords": {
-                            "STOP": {"downstreams": ["http://c.com"], "responder": 0,}
+                            "STOP": {
+                                "downstreams": ["http://c.com"],
+                                "responder": 0,
+                            }
                         },
                     }
                 ).encode()
@@ -101,7 +115,10 @@ def test_negative_responder():
                             "responder": -1,
                         },
                         "keywords": {
-                            "STOP": {"downstreams": ["http://c.com"], "responder": 0,}
+                            "STOP": {
+                                "downstreams": ["http://c.com"],
+                                "responder": 0,
+                            }
                         },
                     }
                 ).encode()
@@ -123,7 +140,10 @@ def test_responder_oob():
                             "responder": 2,
                         },
                         "keywords": {
-                            "STOP": {"downstreams": ["http://c.com"], "responder": 0,}
+                            "STOP": {
+                                "downstreams": ["http://c.com"],
+                                "responder": 0,
+                            }
                         },
                     }
                 ).encode()
@@ -145,7 +165,10 @@ def test_invalid_url():
                             "responder": 1,
                         },
                         "keywords": {
-                            "STOP": {"downstreams": ["http://c.com"], "responder": 0,}
+                            "STOP": {
+                                "downstreams": ["http://c.com"],
+                                "responder": 0,
+                            }
                         },
                     }
                 ).encode()

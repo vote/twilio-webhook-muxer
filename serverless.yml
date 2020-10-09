@@ -134,6 +134,21 @@ custom:
             - https://api.voteamerica.com/v1/smsbot/twilio/
           responder: 0
 
+  alternates:
+    STOP:
+      - stip
+      - srop
+      - stop text
+      - stop texting me
+      - fucking stop
+      - fuck off
+      - remove
+      - screw off
+      - 🛑
+      - stop 🛑
+      - leave me alone
+      - leave me the fuck alone
+
   # The custom domain name to use for the muxer. You can remove this and
   # the serverless-domain-manager plugin to use an API Gateway-provided domain
   # instead.
