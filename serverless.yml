@@ -139,16 +139,26 @@ custom:
       - stip
       - srop
       - stop text
+      - stop texting
+      - stop texting please
       - stop texting me
-      - fucking stop
-      - fuck off
-      - remove
-      - screw off
+      - stop texting me please
+      - stop all
+      - please stop
+      - please stop texting
+      - please stop texting me
+      - stop please
+      - stop now
+      - stop ✋
       - 🛑
       - stop 🛑
+      - remove
+      - unsubscribe
+      - fucking stop
+      - fuck off
+      - screw off
       - leave me alone
       - leave me the fuck alone
-      - unsubscribe
 
   # The custom domain name to use for the muxer. You can remove this and
   # the serverless-domain-manager plugin to use an API Gateway-provided domain
