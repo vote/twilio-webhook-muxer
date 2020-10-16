@@ -69,11 +69,15 @@ class TwilioMuxer:
             .split()
         )
 
-        for keyword, ls in self.config.alternates.items():
-            if request_body_normalized in ls:
+        for keyword, config in self.config.keywords.items():
+            if not config.alternates:
+                continue
+            if request_body_normalized in config.alternates:
+                print(f"Normalized alternate {request_body_normalized} -> {keyword}")
                 request_body_normalized = keyword
                 # clean up downstream request too
                 parsed_body["Body"] = keyword
+                break
 
         request_config = self.config.keywords.get(
             request_body_normalized, self.config.default

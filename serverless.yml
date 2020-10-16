@@ -88,6 +88,8 @@ custom:
         STOP:
           downstreams: ["https://fuzzy-va.ngrok.io/stop"]
           responder: null
+          alternates:
+            - stip
         HELP:
           downstreams: ["https://fuzzy-va.ngrok.io/help"]
           responder: 0
@@ -104,6 +106,8 @@ custom:
             - https://api-staging.voteamerica.com/v1/smsbot/twilio/
             - https://actionnetwork.org/groups/inbound_messages?group_id=160798
           responder: null
+          alternates:
+            - stip
         HELP:
           downstreams:
             - https://api-staging.voteamerica.com/v1/smsbot/twilio/
@@ -125,6 +129,30 @@ custom:
             - https://api.voteamerica.com/v1/smsbot/twilio/
             - https://actionnetwork.org/groups/inbound_messages?group_id=158487
           responder: null
+          alternates:
+            - stip
+            - srop
+            - stop text
+            - stop texting
+            - stop texting please
+            - stop texting me
+            - stop texting me please
+            - stop all
+            - please stop
+            - please stop texting
+            - please stop texting me
+            - stop please
+            - stop now
+            - stop ✋
+            - 🛑
+            - stop 🛑
+            - remove
+            - unsubscribe
+            - fucking stop
+            - fuck off
+            - screw off
+            - leave me alone
+            - leave me the fuck alone
         HELP:
           downstreams:
             - https://api.voteamerica.com/v1/smsbot/twilio/
@@ -133,32 +161,6 @@ custom:
           downstreams:
             - https://api.voteamerica.com/v1/smsbot/twilio/
           responder: 0
-
-  alternates:
-    STOP:
-      - stip
-      - srop
-      - stop text
-      - stop texting
-      - stop texting please
-      - stop texting me
-      - stop texting me please
-      - stop all
-      - please stop
-      - please stop texting
-      - please stop texting me
-      - stop please
-      - stop now
-      - stop ✋
-      - 🛑
-      - stop 🛑
-      - remove
-      - unsubscribe
-      - fucking stop
-      - fuck off
-      - screw off
-      - leave me alone
-      - leave me the fuck alone
 
   # The custom domain name to use for the muxer. You can remove this and
   # the serverless-domain-manager plugin to use an API Gateway-provided domain

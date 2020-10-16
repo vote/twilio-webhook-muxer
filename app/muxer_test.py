@@ -293,17 +293,16 @@ def test_alternates():
                 ),
                 keywords={
                     "stop": KeywordConfig(
-                        downstreams=["https://downstream2.com"], responder=0
+                        downstreams=["https://downstream2.com"],
+                        responder=0,
+                        alternates={
+                            "stip",
+                            "stop texting me",
+                        },
                     ),
                     " HELP ": KeywordConfig(
                         downstreams=["https://downstream3.com"], responder=0
                     ),
-                },
-                alternates={
-                    "stop": [
-                        "stip",
-                        "stop texting me",
-                    ],
                 },
             ),
             body="stop texting  me!!!!",
