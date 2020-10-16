@@ -21,6 +21,7 @@ url_regex = re.compile(
 class KeywordConfig(BaseModel):
     downstreams: List[str]
     responder: Optional[int]
+    alternates: Optional[List[str]]
 
     @validator("responder")
     def responder_must_be_a_valid_index(cls, v, values, **kwargs):
@@ -45,7 +46,6 @@ class KeywordConfig(BaseModel):
 class Config(BaseModel):
     default: KeywordConfig
     keywords: Dict[str, KeywordConfig]
-    alternates: Dict[str, List[str]] = {}
 
     @validator("keywords")
     def normalize_keywords(cls, keywords):
