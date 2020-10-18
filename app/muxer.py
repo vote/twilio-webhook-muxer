@@ -123,11 +123,16 @@ class TwilioMuxer:
             )
 
         print(f"Downstream responses: {results}")
-        print(f"Taking result from responder: {request_config.responder}")
+
+        if request_config.reply:
+            print(f"Replying with {request_config.reply}")
+            return 200, f"<Response><Message><Body>{request_config.reply}</Body></Message></Response>", {"Content-Type": "application/xml"}
 
         if request_config.responder is None:
+            print(f"No responder configured")
             return 200, "<Response></Response>", {"Content-Type": "application/xml"}
 
+        print(f"Taking result from responder: {request_config.responder}")
         result = results[request_config.responder]
         if result is None:
             return 500, "<Response></Response>", {"Content-Type": "application/xml"}

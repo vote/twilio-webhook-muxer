@@ -313,3 +313,39 @@ def test_alternates():
     responses.assert_call_count("https://downstream1.com", 0)
     responses.assert_call_count("https://downstream2.com", 1)
     responses.assert_call_count("https://downstream3.com", 0)
+
+
+@responses.activate
+def test_reply():
+    mock_response("https://downstream1.com", body="d1", request_body="stop")
+    mock_response("https://downstream2.com", body="d2", request_body="stop")
+    mock_response("https://downstream3.com", body="d3", request_body="stop")
+
+    assert (
+        mux_request(
+            Config(
+                default=KeywordConfig(
+                    downstreams=["https://downstream1.com"],
+                    responder=0,
+                ),
+                keywords={
+                    "voted": KeywordConfig(
+                        downstreams=["https://downstream2.com"],
+                        reply="Good for you",
+                        alternates={
+                            "i voted",
+                        },
+                    ),
+                    " HELP ": KeywordConfig(
+                        downstreams=["https://downstream3.com"], responder=0
+                    ),
+                },
+            ),
+            body="i voted!!",
+        )
+        == (200, "<Response><Message><Body>Good for you</Body></Message></Response>", {"Content-Type": "application/xml"})
+    )
+
+    responses.assert_call_count("https://downstream1.com", 0)
+    responses.assert_call_count("https://downstream2.com", 1)
+    responses.assert_call_count("https://downstream3.com", 0)

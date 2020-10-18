@@ -93,6 +93,11 @@ custom:
         HELP:
           downstreams: ["https://fuzzy-va.ngrok.io/help"]
           responder: 0
+        VOTED:
+          downstreams: ["https://fuzzy-va.ngrok.io/voted"]
+          reply: Thank you for voting, and thank you for letting us know! Please make sure your friends and family vote too.
+          alternates:
+            - i already voted
     staging:
       default:
         downstreams:
@@ -116,6 +121,16 @@ custom:
           downstreams:
             - https://api-staging.voteamerica.com/v1/smsbot/twilio/
           responder: 0
+        VOTED:
+          downstreams:
+            - https://api-staging.voteamerica.com/v1/smsbot/twilio/
+            - https://helpline-staging.voteamerica.io/twilio-pull
+          reply: Thank you for voting, and thank you for letting us know! Please make sure your friends and family vote too.
+          alternates:
+            - i voted
+            - i already voted
+            - i've already voted
+            - already voted
     prod:
       default:
         downstreams:
@@ -161,6 +176,16 @@ custom:
           downstreams:
             - https://api.voteamerica.com/v1/smsbot/twilio/
           responder: 0
+        VOTED:
+          downstreams:
+            - https://api.voteamerica.com/v1/smsbot/twilio/
+            - https://helpline-prod.voteamerica.io/twilio-pull
+          reply: Thank you for voting, and thank you for letting us know! Please make sure your friends and family vote too.
+          alternates:
+            - i voted
+            - i already voted
+            - i've already voted
+            - already voted
 
   # The custom domain name to use for the muxer. You can remove this and
   # the serverless-domain-manager plugin to use an API Gateway-provided domain

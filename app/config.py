@@ -22,6 +22,7 @@ class KeywordConfig(BaseModel):
     downstreams: List[str]
     responder: Optional[int]
     alternates: Optional[List[str]]
+    reply: Optional[str]
 
     @validator("responder")
     def responder_must_be_a_valid_index(cls, v, values, **kwargs):
