@@ -216,9 +216,9 @@ def test_matching_default():
 
 @responses.activate
 def test_matching_stop():
-    mock_response("https://downstream1.com", body="d1", request_body=" StOP\n")
-    mock_response("https://downstream2.com", body="d2", request_body=" StOP\n")
-    mock_response("https://downstream3.com", body="d3", request_body=" StOP\n")
+    mock_response("https://downstream1.com", body="d1", request_body="stop")
+    mock_response("https://downstream2.com", body="d2", request_body="stop")
+    mock_response("https://downstream3.com", body="d3", request_body="stop")
 
     assert (
         mux_request(
