@@ -63,16 +63,18 @@ class TwilioMuxer:
 
         request_body_normalized = " ".join(
             parsed_body.get("Body", "")
+            .translate(str.maketrans("", "", string.punctuation))
             .strip()
             .lower()
-            .translate(str.maketrans("", "", string.punctuation))
             .split()
         )
 
         for keyword, config in self.config.keywords.items():
             if not config.alternates:
                 continue
-            if request_body_normalized in config.alternates:
+            if keyword == request_body_normalized or (
+                config.alternates and request_body_normalized in config.alternates
+            ):
                 print(f"Normalized alternate {request_body_normalized} -> {keyword}")
                 request_body_normalized = keyword
                 # clean up downstream request too
