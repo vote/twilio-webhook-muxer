@@ -128,7 +128,7 @@ custom:
             - https://helpline-prod.voteamerica.io/twilio-pull
             - https://api.voteamerica.com/v1/smsbot/twilio/
             - https://actionnetwork.org/groups/inbound_messages?group_id=158487
-          responder: null
+          responder: 1
           alternates:
             - stip
             - srop
